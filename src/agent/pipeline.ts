@@ -15,8 +15,26 @@ import type {
 
 const SPAM_DOMAINS = [
   'pump.fun',
+  'coingecko.com', // almost every indexed page is a price tracker
   // add more as encountered
 ];
+
+// URL path patterns that almost always mean price/speculation pages,
+// not real ecosystem intel. Applied after domain filtering because
+// aggregators (e.g. coinmarketcap.com) also host real news sections.
+const JUNK_URL_PATTERNS = [
+  /\/price/i,
+  /price-prediction/i,
+  /\/coins\//i,
+  /\/currencies\//i,
+  /\/converter\//i,
+  /\/charts?\//i,
+  /price-today/i,
+];
+
+function isJunkUrl(url: string): boolean {
+  return JUNK_URL_PATTERNS.some((re) => re.test(url));
+}
 
 const MAX_SOURCES = 10;
 
@@ -95,8 +113,13 @@ export async function runResearch(
       ),
     )
   ).flat();
-  const urls = dedupeUrls(hits.map((h) => h.url)).slice(0, MAX_SOURCES);
-  emit('searching', `Found ${hits.length} hits, keeping ${urls.length} unique sources.`);
+  const deduped = dedupeUrls(hits.map((h) => h.url));
+  const junkCount = deduped.filter(isJunkUrl).length;
+  const urls = deduped.filter((u) => !isJunkUrl(u)).slice(0, MAX_SOURCES);
+  emit(
+    'searching',
+    `Found ${hits.length} hits, ${deduped.length} unique, filtered ${junkCount} price/speculation pages, keeping ${urls.length} sources.`,
+  );
 
   if (urls.length === 0) {
     throw new Error('No sources found — try a different topic.');
@@ -114,6 +137,8 @@ export async function runResearch(
   // 4. Summarize (fast model, in parallel)
   emit('summarizing', 'Summarizing sources…');
   const summaries: SourceSummary[] = [];
+  let droppedIrrelevant = 0;
+  let droppedFailed = 0;
   const settled = await Promise.allSettled(
     extracted.map(async (src) => {
       const raw = await chat(
@@ -125,12 +150,23 @@ export async function runResearch(
       return { url: src.url, title: src.title, ...parsed };
     }),
   );
-  for (const s of settled) {
+  for (let i = 0; i < settled.length; i++) {
+    const s = settled[i];
+    const src = extracted[i];
     if (s.status === 'fulfilled' && s.value.keyClaims.length > 0) {
       summaries.push(s.value);
+    } else if (s.status === 'fulfilled') {
+      droppedIrrelevant++;
+      emit('summarizing', `Dropped (irrelevant): ${src.url}`);
+    } else {
+      droppedFailed++;
+      emit('summarizing', `Dropped (summarizer error): ${src.url}`);
     }
   }
-  emit('summarizing', `Summarized ${summaries.length} sources.`);
+  emit(
+    'summarizing',
+    `Summarized ${summaries.length} sources (${droppedIrrelevant} irrelevant, ${droppedFailed} failed).`,
+  );
 
   if (summaries.length === 0) {
     throw new Error('No usable source summaries — try a different topic.');

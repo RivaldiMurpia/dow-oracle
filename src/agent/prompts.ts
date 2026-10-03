@@ -8,6 +8,9 @@ Given a research topic, produce 3-5 diverse web search queries that together cov
 
 Rules:
 - Queries must be in English, specific, and non-overlapping.
+- Never include absolute dates, months, or years in queries — use relative terms like "recent", "this week", "latest".
+- Avoid price-speculation angles ("price prediction", "price today", "price chart"); focus on developments, launches, partnerships, governance, security incidents, and developer activity.
+- Include at least one query aimed at primary sources (official blog, docs, governance forum, GitHub).
 - timeRange: "day" for breaking news topics, "week" for general topics, "month" for background/fundamental topics.
 - Output ONLY valid JSON, no prose, no code fences:
 {"queries": [{"query": "...", "timeRange": "week"}]}`;
