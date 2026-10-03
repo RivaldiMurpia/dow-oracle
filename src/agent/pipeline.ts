@@ -116,6 +116,21 @@ function isJunkQuery(q: string): boolean {
   return t.length < 12 || !/[a-z0-9]{4,}/i.test(t);
 }
 
+/**
+ * Deterministic fallback when the planner model misbehaves.
+ * Mirrors the prompt's coverage (news, announcements, sentiment, risks)
+ * so the pipeline never dies at step 1.
+ */
+function fallbackQueries(topic: string): PlannedQuery[] {
+  const t = topic.trim().replace(/\?+$/, '');
+  return [
+    { query: `${t} latest news developments this week`, timeRange: 'week' },
+    { query: `${t} announcements partnerships launches`, timeRange: 'month' },
+    { query: `${t} community discussion sentiment`, timeRange: 'week' },
+    { query: `${t} risks criticism security concerns`, timeRange: 'month' },
+  ];
+}
+
 function dedupeUrls(urls: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -136,7 +151,7 @@ export async function runResearch(
   const emit = (stage: ProgressStage, message: string) =>
     onProgress({ stage, message });
 
-  // 1. Plan (retry if the model returns placeholder queries)
+  // 1. Plan (retry on junk; deterministic fallback as last resort)
   emit('planning', 'Planning search queries…');
   let planned: { queries: PlannedQuery[] } | null = null;
   for (let attempt = 0; attempt < 3 && !planned; attempt++) {
@@ -146,15 +161,25 @@ export async function runResearch(
       `Topic: ${topic}`,
       PlannedQueriesSchema,
     );
+    const junk = candidate.queries.filter((q) => isJunkQuery(q.query));
     const valid = candidate.queries.filter((q) => !isJunkQuery(q.query));
+    if (junk.length > 0) {
+      emit(
+        'planning',
+        `Rejected ${junk.length} junk queries: ${junk
+          .map((q) => `"${q.query.slice(0, 50)}"`)
+          .join(', ')}`,
+      );
+    }
     if (valid.length > 0) {
       planned = { queries: valid };
-    } else {
-      emit('planning', `Planner returned junk queries, retrying (${attempt + 1}/3)…`);
+    } else if (attempt < 2) {
+      emit('planning', `Planner returned only junk, retrying (${attempt + 1}/3)…`);
     }
   }
   if (!planned) {
-    throw new Error('Planner could not produce valid search queries — try a different topic.');
+    emit('planning', 'Planner failed 3x — using fallback query templates.');
+    planned = { queries: fallbackQueries(topic) };
   }
   emit(
     'planning',
