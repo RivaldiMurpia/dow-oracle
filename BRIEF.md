@@ -29,14 +29,14 @@ Setiap query user melewati 6 tahap. Semua LLM call lewat **Nebius Token Factory*
 
 | # | Tahap | Komponen | Input → Output |
 |---|-------|----------|----------------|
-| 1 | **Planner** | Nemotron Nano | Topik user → 3–5 search query + jendela waktu (mis. 7 hari terakhir) |
+| 1 | **Planner** | Nemotron 3.5 Lightning | Topik user → 3–5 search query + jendela waktu (mis. 7 hari terakhir) |
 | 2 | **Search** | Tavily Search API | Query → ~8 hasil per query. Param: `search_depth: advanced`, `time_range: week`, `include_answer: false`, filter domain untuk buang situs spam |
 | 3 | **Dedup & rank** | Kode (tanpa LLM) | Gabung hasil, buang duplikat URL, ambil top ~10 unik |
 | 4 | **Extract** | Tavily Extract API | 10 URL → teks bersih per sumber |
-| 5 | **Summarizer** | Nemotron Nano / Super | Teks sumber → 1 paragraf ringkasan + daftar klaim kunci per sumber (murah, cepat, paralel) |
+| 5 | **Summarizer** | Nemotron 3.5 Lightning | Teks sumber → 1 paragraf ringkasan + daftar klaim kunci per sumber (murah, cepat, paralel) |
 | 6 | **Analyst** | Nemotron 3 Ultra | Semua ringkasan → laporan final: skor sinyal 0–100, breakdown bullish/bearish/netral, katalis utama, **risk flags** (tim anonim, belum audit, likuiditas tipis, tokenomics mencurigakan), sitasi per klaim |
 
-**Kenapa model tiering:** Ultra dipakai sekali per laporan untuk reasoning berat; Nano/Super dipakai berkali-kali untuk kerja cepat. Ini hemat credit, cepat, dan jadi cerita teknis yang bagus untuk juri ("serious reasoning where it matters, fast calls everywhere else" — persis seperti yang disarankan halaman hackathon).
+**Kenapa model tiering:** Ultra dipakai sekali per laporan untuk reasoning berat; Lightning dipakai berkali-kali untuk kerja cepat. Lightning dipilih over Nano: harga SAMA ($0.06/$0.24 per 1M) tapi 5x lebih cepat (314 vs 60 tok/s) dan konteks 1M — didesain buat agentic reasoning & tool use. Super di-skip: kejepit di tengah, tidak menang di harga maupun reasoning. Estimasi cost: **~$0.013/laporan** → $25 credit ≈ 1.900 laporan. Ini hemat credit, cepat, dan jadi cerita teknis yang bagus untuk juri ("serious reasoning where it matters, fast calls everywhere else" — persis seperti yang disarankan halaman hackathon).
 
 **Contoh query demo:**
 - "What's heating up in the Monad ecosystem this week?"
