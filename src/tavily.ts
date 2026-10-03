@@ -67,15 +67,18 @@ interface TavilyExtractResponse {
   failed_results: { url: string; error: string }[];
 }
 
-/** Pull full clean text from a list of URLs. Failed URLs are skipped. */
+/** Pull full clean text from a list of URLs. Failed URLs are skipped.
+ *  Pass `query` to narrow extraction to query-relevant chunks (smaller,
+ *  faster, more relevant). */
 export async function tavilyExtract(
   urls: string[],
+  query?: string,
 ): Promise<{ url: string; title: string; text: string }[]> {
   if (urls.length === 0) return [];
   const data = await post<TavilyExtractResponse>('/extract', {
     urls,
     extract_depth: 'advanced',
-    query: undefined,
+    ...(query ? { query } : {}),
   });
   return data.results
     .filter((r) => r.raw_content && r.raw_content.trim().length > 200)

@@ -152,6 +152,16 @@ export async function runResearch(
     onProgress({ stage, message });
   const debug = process.env.DOWORACLE_DEBUG === '1';
 
+  // Per-stage timing so slow runs can be diagnosed instead of guessed.
+  const startedAt = Date.now();
+  let lastMark = startedAt;
+  const timing: [string, number][] = [];
+  const mark = (label: string) => {
+    const now = Date.now();
+    timing.push([label, Math.round((now - lastMark) / 1000)]);
+    lastMark = now;
+  };
+
   // 1. Plan (retry on junk; deterministic fallback as last resort)
   emit('planning', 'Planning search queries…');
   let planned: { queries: PlannedQuery[] } | null = null;
@@ -182,6 +192,7 @@ export async function runResearch(
     emit('planning', 'Planner failed 3x — using fallback query templates.');
     planned = { queries: fallbackQueries(topic) };
   }
+  mark('planning');
   emit(
     'planning',
     `Planned ${planned.queries.length} queries: ${planned.queries
@@ -223,10 +234,11 @@ export async function runResearch(
   if (urls.length === 0) {
     throw new Error('No sources found — try a different topic.');
   }
+  mark('searching');
 
-  // 3. Extract
+  // 3. Extract (scoped to the topic: smaller payloads, faster, more relevant)
   emit('extracting', `Extracting full text from ${urls.length} sources…`);
-  const extractedRaw = await tavilyExtract(urls);
+  const extractedRaw = await tavilyExtract(urls, topic);
   // Drop thin/chrome content before paying for summarization.
   const extracted: ExtractedSource[] = [];
   let droppedThin = 0;
@@ -246,6 +258,7 @@ export async function runResearch(
     'extracting',
     `Extracted ${extracted.length} substantive articles (${droppedThin} thin).`,
   );
+  mark('extracting');
 
   if (extracted.length === 0) {
     throw new Error('Could not extract readable content from any source.');
@@ -291,6 +304,7 @@ export async function runResearch(
     'summarizing',
     `Summarized ${summaries.length} sources (${droppedIrrelevant} irrelevant, ${droppedFailed} failed).`,
   );
+  mark('summarizing');
 
   if (summaries.length === 0) {
     throw new Error('No usable source summaries — try a different topic.');
@@ -323,7 +337,13 @@ export async function runResearch(
     sources: summaries.map((s) => ({ url: s.url, title: s.title })),
     generatedAt: new Date().toISOString(),
   };
-  emit('done', `Report ready — score ${report.score}/100 (${report.verdict}).`);
+  mark('analyzing');
+  const totalSec = Math.round((Date.now() - startedAt) / 1000);
+  const timingStr = timing.map(([l, s]) => `${l} ${s}s`).join(' · ');
+  emit(
+    'done',
+    `Report ready — score ${report.score}/100 (${report.verdict}). ⏱️ ${timingStr} · total ${totalSec}s`,
+  );
   return report;
 }
 
