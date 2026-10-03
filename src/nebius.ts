@@ -2,6 +2,7 @@
 // All model IDs come from env — verify exact IDs on the Token Factory dashboard.
 
 import OpenAI from 'openai';
+import type { ChatCompletionCreateParams } from 'openai/resources/chat/completions';
 import { z } from 'zod';
 
 let client: OpenAI | null = null;
@@ -31,7 +32,19 @@ export function fastModel(): string {
 export interface ChatOptions {
   temperature?: number;
   maxTokens?: number;
+  /**
+   * Set false to disable the model's thinking trace. Reasoning-style
+   * models can spend the whole token budget on "Here's a thinking
+   * process…" and never emit the JSON answer — disable for structured
+   * planning/extraction calls. Passed as chat_template_kwargs
+   * (vLLM-style) which Nebius Token Factory honors.
+   */
+  thinking?: boolean;
 }
+
+type ChatBody = ChatCompletionCreateParams & {
+  chat_template_kwargs?: Record<string, unknown>;
+};
 
 export async function chat(
   model: string,
@@ -39,7 +52,7 @@ export async function chat(
   user: string,
   opts: ChatOptions = {},
 ): Promise<string> {
-  const res = await getClient().chat.completions.create({
+  const body: ChatBody = {
     model,
     messages: [
       { role: 'system', content: system },
@@ -47,7 +60,11 @@ export async function chat(
     ],
     temperature: opts.temperature ?? 0.2,
     max_tokens: opts.maxTokens ?? 2048,
-  });
+  };
+  if (opts.thinking === false) {
+    body.chat_template_kwargs = { enable_thinking: false };
+  }
+  const res = await getClient().chat.completions.create(body);
   return res.choices[0]?.message?.content?.trim() ?? '';
 }
 

@@ -199,30 +199,40 @@ export async function runResearch(
   const keywords = topicKeywords(topic);
   let planned: { queries: PlannedQuery[] } | null = null;
   for (let attempt = 0; attempt < 3 && !planned; attempt++) {
-    const candidate = await chatJson(
-      fastModel(),
-      PLANNER_SYSTEM,
-      `Topic: ${topic}`,
-      PlannedQueriesSchema,
-    );
-    const rejected = candidate.queries.filter(
-      (q) => isJunkQuery(q.query) || !matchesTopic(q.query, keywords),
-    );
-    const valid = candidate.queries.filter(
-      (q) => !isJunkQuery(q.query) && matchesTopic(q.query, keywords),
-    );
-    if (rejected.length > 0) {
+    try {
+      const candidate = await chatJson(
+        fastModel(),
+        PLANNER_SYSTEM,
+        `Topic: ${topic}`,
+        PlannedQueriesSchema,
+        { thinking: false },
+      );
+      const rejected = candidate.queries.filter(
+        (q) => isJunkQuery(q.query) || !matchesTopic(q.query, keywords),
+      );
+      const valid = candidate.queries.filter(
+        (q) => !isJunkQuery(q.query) && matchesTopic(q.query, keywords),
+      );
+      if (rejected.length > 0) {
+        emit(
+          'planning',
+          `Rejected ${rejected.length} queries: ${rejected
+            .map((q) => `"${q.query.slice(0, 50)}"`)
+            .join(', ')}`,
+        );
+      }
+      if (valid.length > 0) {
+        planned = { queries: valid };
+      } else if (attempt < 2) {
+        emit('planning', `Planner returned only junk, retrying (${attempt + 1}/3)…`);
+      }
+    } catch (err) {
       emit(
         'planning',
-        `Rejected ${rejected.length} queries: ${rejected
-          .map((q) => `"${q.query.slice(0, 50)}"`)
-          .join(', ')}`,
+        `Planner attempt ${attempt + 1} failed: ${
+          err instanceof Error ? err.message.slice(0, 120) : 'unknown error'
+        }`,
       );
-    }
-    if (valid.length > 0) {
-      planned = { queries: valid };
-    } else if (attempt < 2) {
-      emit('planning', `Planner returned only junk, retrying (${attempt + 1}/3)…`);
     }
   }
   if (!planned) {
@@ -317,6 +327,7 @@ export async function runResearch(
               ? '\n\nSTRICT: summarize the ACTUAL article text above. Do not repeat instructions or output example text.'
               : ''),
           SummarySchema,
+          { thinking: false },
         );
         if (!isTemplateEcho(parsed.summary, parsed.keyClaims)) {
           return { url: src.url, title: src.title, ...parsed };
