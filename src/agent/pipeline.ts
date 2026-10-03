@@ -312,6 +312,14 @@ export async function runResearch(
 
   // 5. Analyze (reasoning model, once)
   emit('analyzing', 'Analyzing with the reasoning model…');
+  if (debug) {
+    for (const s of summaries) {
+      emit(
+        'analyzing',
+        `SUMMARY ${s.url}\n  ${s.summary.slice(0, 250)}\n  claims: ${s.keyClaims.join(' | ').slice(0, 900)}`,
+      );
+    }
+  }
   const analystInput = summaries
     .map(
       (s, i) =>
