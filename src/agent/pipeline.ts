@@ -207,7 +207,8 @@ export async function runResearch(
   let droppedThin = 0;
   for (const src of extractedRaw) {
     if (debug) {
-      emit('extracting', `${src.url} → ${src.text.length} chars`);
+      const preview = src.text.slice(0, 200).replace(/\s+/g, ' ');
+      emit('extracting', `${src.url} → ${src.text.length} chars | ${preview}…`);
     }
     if (hasSubstance(src.text)) {
       extracted.push(src);
@@ -235,7 +236,7 @@ export async function runResearch(
       const parsed = await chatJson(
         fastModel(),
         SUMMARIZER_SYSTEM,
-        `URL: ${src.url}\nTITLE: ${src.title}\n\n${src.text.slice(0, 12000)}`,
+        `RESEARCH TOPIC: ${topic}\nURL: ${src.url}\nTITLE: ${src.title}\n\n${src.text.slice(0, 12000)}`,
         SummarySchema,
       );
       return { url: src.url, title: src.title, ...parsed };
