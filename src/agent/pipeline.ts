@@ -343,7 +343,12 @@ export async function runResearch(
       emit('summarizing', `Dropped (irrelevant): ${src.url}`);
     } else {
       droppedFailed++;
-      emit('summarizing', `Dropped (summarizer error): ${src.url}`);
+      const reason =
+        s.reason instanceof Error ? s.reason.message : String(s.reason);
+      emit(
+        'summarizing',
+        `Dropped (summarizer error): ${src.url} — ${reason.slice(0, 150)}`,
+      );
     }
   }
   emit(
