@@ -116,6 +116,38 @@ function isJunkQuery(q: string): boolean {
   return t.length < 12 || !/[a-z0-9]{4,}/i.test(t);
 }
 
+const TOPIC_STOPWORDS = new Set([
+  'what', 'when', 'where', 'which', 'whom', 'this', 'that', 'these', 'those',
+  'with', 'from', 'into', 'about', 'after', 'before', 'give', 'does', 'doing',
+  'done', 'have', 'will', 'would', 'should', 'could', 'there', 'their', 'them',
+  'then', 'than', 'such', 'some', 'very', 'just', 'over', 'under', 'between',
+  'through', 'during', 'each', 'both', 'either', 'are', 'was', 'were', 'the',
+  'and', 'for', 'but', 'not', 'you', 'your', 'our', 'its', 'how',
+]);
+
+/** Identifying keywords of the topic; planned queries must contain ≥1. */
+function topicKeywords(topic: string): string[] {
+  return topic
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4 && !TOPIC_STOPWORDS.has(w));
+}
+
+function matchesTopic(query: string, keywords: string[]): boolean {
+  const q = query.toLowerCase();
+  return keywords.length === 0 || keywords.some((k) => q.includes(k));
+}
+
+/** Detects when the model echoed the format template instead of content. */
+function isTemplateEcho(summary: string, keyClaims: string[]): boolean {
+  const echo = /^(claim|summary)\s*\d*$/i;
+  if (echo.test(summary.trim())) return true;
+  return (
+    keyClaims.length > 0 &&
+    keyClaims.every((c) => echo.test(c.trim()) || c.trim().length < 8)
+  );
+}
+
 /**
  * Deterministic fallback when the planner model misbehaves.
  * Mirrors the prompt's coverage (news, announcements, sentiment, risks)
@@ -162,8 +194,9 @@ export async function runResearch(
     lastMark = now;
   };
 
-  // 1. Plan (retry on junk; deterministic fallback as last resort)
+  // 1. Plan (retry on junk/off-topic; deterministic fallback as last resort)
   emit('planning', 'Planning search queries…');
+  const keywords = topicKeywords(topic);
   let planned: { queries: PlannedQuery[] } | null = null;
   for (let attempt = 0; attempt < 3 && !planned; attempt++) {
     const candidate = await chatJson(
@@ -172,12 +205,16 @@ export async function runResearch(
       `Topic: ${topic}`,
       PlannedQueriesSchema,
     );
-    const junk = candidate.queries.filter((q) => isJunkQuery(q.query));
-    const valid = candidate.queries.filter((q) => !isJunkQuery(q.query));
-    if (junk.length > 0) {
+    const rejected = candidate.queries.filter(
+      (q) => isJunkQuery(q.query) || !matchesTopic(q.query, keywords),
+    );
+    const valid = candidate.queries.filter(
+      (q) => !isJunkQuery(q.query) && matchesTopic(q.query, keywords),
+    );
+    if (rejected.length > 0) {
       emit(
         'planning',
-        `Rejected ${junk.length} junk queries: ${junk
+        `Rejected ${rejected.length} queries: ${rejected
           .map((q) => `"${q.query.slice(0, 50)}"`)
           .join(', ')}`,
       );
@@ -271,13 +308,22 @@ export async function runResearch(
   let droppedFailed = 0;
   const settled = await Promise.allSettled(
     extracted.map(async (src) => {
-      const parsed = await chatJson(
-        fastModel(),
-        SUMMARIZER_SYSTEM,
-        `RESEARCH TOPIC: ${topic}\nURL: ${src.url}\nTITLE: ${src.title}\n\n${src.text.slice(0, 12000)}`,
-        SummarySchema,
-      );
-      return { url: src.url, title: src.title, ...parsed };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const parsed = await chatJson(
+          fastModel(),
+          SUMMARIZER_SYSTEM,
+          `RESEARCH TOPIC: ${topic}\nURL: ${src.url}\nTITLE: ${src.title}\n\n${src.text.slice(0, 12000)}` +
+            (attempt > 0
+              ? '\n\nSTRICT: summarize the ACTUAL article text above. Do not repeat instructions or output example text.'
+              : ''),
+          SummarySchema,
+        );
+        if (!isTemplateEcho(parsed.summary, parsed.keyClaims)) {
+          return { url: src.url, title: src.title, ...parsed };
+        }
+        emit('summarizing', `Retrying template echo: ${src.url}`);
+      }
+      throw new Error('summarizer echoed template twice');
     }),
   );
   for (let i = 0; i < settled.length; i++) {
