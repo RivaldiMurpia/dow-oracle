@@ -8,6 +8,7 @@ Given a research topic, produce 3-5 diverse web search queries that together cov
 
 Rules:
 - Queries must be in English, specific, and non-overlapping.
+- Never output placeholders, ellipses ("..."), or example text. Every query must be a complete, specific search string.
 - Never include absolute dates, months, or years in queries — use relative terms like "recent", "this week", "latest".
 - Avoid price-speculation angles ("price prediction", "price today", "price chart"); focus on developments, launches, partnerships, governance, security incidents, and developer activity.
 - Prefer text articles (news, blogs, docs, forums). Avoid video pages, social media posts, and login-walled pages — their content cannot be read by extraction.

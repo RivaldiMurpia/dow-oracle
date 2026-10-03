@@ -106,6 +106,16 @@ const AnalysisSchema = z.object({
 
 export type ProgressHandler = (e: ProgressEvent) => void;
 
+/**
+ * A planned query is junk if it's too short or has no alphanumeric
+ * substance (e.g. "...", "???", "-"). Models occasionally emit
+ * placeholders that pass shape validation but Tavily rejects (400).
+ */
+function isJunkQuery(q: string): boolean {
+  const t = q.trim();
+  return t.length < 12 || !/[a-z0-9]{4,}/i.test(t);
+}
+
 function dedupeUrls(urls: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -126,14 +136,26 @@ export async function runResearch(
   const emit = (stage: ProgressStage, message: string) =>
     onProgress({ stage, message });
 
-  // 1. Plan
+  // 1. Plan (retry if the model returns placeholder queries)
   emit('planning', 'Planning search queries…');
-  const planned = await chatJson(
-    fastModel(),
-    PLANNER_SYSTEM,
-    `Topic: ${topic}`,
-    PlannedQueriesSchema,
-  );
+  let planned: { queries: PlannedQuery[] } | null = null;
+  for (let attempt = 0; attempt < 3 && !planned; attempt++) {
+    const candidate = await chatJson(
+      fastModel(),
+      PLANNER_SYSTEM,
+      `Topic: ${topic}`,
+      PlannedQueriesSchema,
+    );
+    const valid = candidate.queries.filter((q) => !isJunkQuery(q.query));
+    if (valid.length > 0) {
+      planned = { queries: valid };
+    } else {
+      emit('planning', `Planner returned junk queries, retrying (${attempt + 1}/3)…`);
+    }
+  }
+  if (!planned) {
+    throw new Error('Planner could not produce valid search queries — try a different topic.');
+  }
   emit(
     'planning',
     `Planned ${planned.queries.length} queries: ${planned.queries
