@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { tavilySearch, tavilyExtract } from '../tavily.js';
-import { chat, extractJson, reasoningModel, fastModel } from '../nebius.js';
+import { chatJson, reasoningModel, fastModel } from '../nebius.js';
 import { PLANNER_SYSTEM, SUMMARIZER_SYSTEM, ANALYST_SYSTEM } from './prompts.js';
 import type {
   PlannedQuery,
@@ -88,8 +88,12 @@ export async function runResearch(
 
   // 1. Plan
   emit('planning', 'Planning search queries…');
-  const planRaw = await chat(fastModel(), PLANNER_SYSTEM, `Topic: ${topic}`);
-  const planned = PlannedQueriesSchema.parse(extractJson(planRaw));
+  const planned = await chatJson(
+    fastModel(),
+    PLANNER_SYSTEM,
+    `Topic: ${topic}`,
+    PlannedQueriesSchema,
+  );
   emit(
     'planning',
     `Planned ${planned.queries.length} queries: ${planned.queries
@@ -141,12 +145,12 @@ export async function runResearch(
   let droppedFailed = 0;
   const settled = await Promise.allSettled(
     extracted.map(async (src) => {
-      const raw = await chat(
+      const parsed = await chatJson(
         fastModel(),
         SUMMARIZER_SYSTEM,
         `URL: ${src.url}\nTITLE: ${src.title}\n\n${src.text.slice(0, 12000)}`,
+        SummarySchema,
       );
-      const parsed = SummarySchema.parse(extractJson(raw));
       return { url: src.url, title: src.title, ...parsed };
     }),
   );
@@ -180,13 +184,13 @@ export async function runResearch(
         `SOURCE ${i + 1} (${s.url})\nTITLE: ${s.title}\nSUMMARY: ${s.summary}\nKEY CLAIMS:\n${s.keyClaims.map((c) => `- ${c}`).join('\n')}`,
     )
     .join('\n\n---\n\n');
-  const analysisRaw = await chat(
+  const analysis = await chatJson(
     reasoningModel(),
     ANALYST_SYSTEM,
     `TOPIC: ${topic}\n\n${analystInput}`,
+    AnalysisSchema,
     { maxTokens: 3000 },
   );
-  const analysis = AnalysisSchema.parse(extractJson(analysisRaw));
 
   // 6. Assemble
   const report: SignalReport = {
