@@ -6,6 +6,7 @@ import { tavilySearch, tavilyExtract } from '../tavily.js';
 import { chatJson, reasoningModel, fastModel } from '../nebius.js';
 import { PLANNER_SYSTEM, SUMMARIZER_SYSTEM, ANALYST_SYSTEM } from './prompts.js';
 import type {
+  ExtractedSource,
   PlannedQuery,
   ProgressEvent,
   ProgressStage,
@@ -34,6 +35,45 @@ const JUNK_URL_PATTERNS = [
 
 function isJunkUrl(url: string): boolean {
   return JUNK_URL_PATTERNS.some((re) => re.test(url));
+}
+
+// Domains that rarely yield readable article text via extraction
+// (video pages, JS-walled social, login walls). Filtered before extract
+// so we don't waste summarizer calls on site chrome.
+const EXTRACT_HOSTILE_DOMAINS = [
+  'x.com',
+  'twitter.com',
+  'youtube.com',
+  'youtu.be',
+  'linkedin.com',
+  'instagram.com',
+  'tiktok.com',
+  'facebook.com',
+];
+
+function hostnameOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '').toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function isExtractHostile(url: string): boolean {
+  const host = hostnameOf(url);
+  return EXTRACT_HOSTILE_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`));
+}
+
+/**
+ * Heuristic substance check: real article text has multiple proper
+ * sentences. Nav menus, cookie banners, and template chrome don't.
+ */
+function hasSubstance(text: string): boolean {
+  const sentences = text
+    .split(/[.!?…]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.split(/\s+/).length >= 5);
+  return text.length >= 500 && sentences.length >= 3;
 }
 
 const MAX_SOURCES = 10;
@@ -119,10 +159,17 @@ export async function runResearch(
   ).flat();
   const deduped = dedupeUrls(hits.map((h) => h.url));
   const junkCount = deduped.filter(isJunkUrl).length;
-  const urls = deduped.filter((u) => !isJunkUrl(u)).slice(0, MAX_SOURCES);
+  const hostileCount = deduped.filter(
+    (u) => !isJunkUrl(u) && isExtractHostile(u),
+  ).length;
+  const urls = deduped
+    .filter((u) => !isJunkUrl(u) && !isExtractHostile(u))
+    .slice(0, MAX_SOURCES);
   emit(
     'searching',
-    `Found ${hits.length} hits, ${deduped.length} unique, filtered ${junkCount} price/speculation pages, keeping ${urls.length} sources.`,
+    `Found ${hits.length} hits, ${deduped.length} unique, ` +
+      `filtered ${junkCount} price pages + ${hostileCount} video/social pages, ` +
+      `keeping ${urls.length} sources.`,
   );
 
   if (urls.length === 0) {
@@ -131,8 +178,26 @@ export async function runResearch(
 
   // 3. Extract
   emit('extracting', `Extracting full text from ${urls.length} sources…`);
-  const extracted = await tavilyExtract(urls);
-  emit('extracting', `Extracted ${extracted.length} readable articles.`);
+  const extractedRaw = await tavilyExtract(urls);
+  // Drop thin/chrome content before paying for summarization.
+  const debug = process.env.DOWORACLE_DEBUG === '1';
+  const extracted: ExtractedSource[] = [];
+  let droppedThin = 0;
+  for (const src of extractedRaw) {
+    if (debug) {
+      emit('extracting', `${src.url} → ${src.text.length} chars`);
+    }
+    if (hasSubstance(src.text)) {
+      extracted.push(src);
+    } else {
+      droppedThin++;
+      emit('extracting', `Dropped (thin content): ${src.url}`);
+    }
+  }
+  emit(
+    'extracting',
+    `Extracted ${extracted.length} substantive articles (${droppedThin} thin).`,
+  );
 
   if (extracted.length === 0) {
     throw new Error('Could not extract readable content from any source.');

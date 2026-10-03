@@ -43,6 +43,15 @@ web/                  # Next.js dashboard (week 2 of the build plan)
 - `npm run research -- "<topic>"` — run a research job from the CLI
 - `npm run typecheck` — TypeScript check
 
+## Debugging
+
+Set `DOWORACLE_DEBUG=1` to log per-source extraction stats (char counts)
+during a run:
+
+```bash
+DOWORACLE_DEBUG=1 npm run research -- "<topic>"
+```
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
