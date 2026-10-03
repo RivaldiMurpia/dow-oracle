@@ -150,6 +150,7 @@ export async function runResearch(
 ): Promise<SignalReport> {
   const emit = (stage: ProgressStage, message: string) =>
     onProgress({ stage, message });
+  const debug = process.env.DOWORACLE_DEBUG === '1';
 
   // 1. Plan (retry on junk; deterministic fallback as last resort)
   emit('planning', 'Planning search queries…');
@@ -227,7 +228,6 @@ export async function runResearch(
   emit('extracting', `Extracting full text from ${urls.length} sources…`);
   const extractedRaw = await tavilyExtract(urls);
   // Drop thin/chrome content before paying for summarization.
-  const debug = process.env.DOWORACLE_DEBUG === '1';
   const extracted: ExtractedSource[] = [];
   let droppedThin = 0;
   for (const src of extractedRaw) {
@@ -272,6 +272,13 @@ export async function runResearch(
     const src = extracted[i];
     if (s.status === 'fulfilled' && s.value.keyClaims.length > 0) {
       summaries.push(s.value);
+      if (debug) {
+        const claims = s.value.keyClaims
+          .slice(0, 3)
+          .map((c) => c.slice(0, 110))
+          .join(' | ');
+        emit('summarizing', `✓ ${src.url}\n  → ${claims}`);
+      }
     } else if (s.status === 'fulfilled') {
       droppedIrrelevant++;
       emit('summarizing', `Dropped (irrelevant): ${src.url}`);
