@@ -19,7 +19,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "zod": ["./node_modules/zod"],
+      "openai": ["./node_modules/openai"],
+      "openai/*": ["./node_modules/openai/*"]
     }
   },
   "include": [
