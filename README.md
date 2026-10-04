@@ -4,7 +4,7 @@
 
 🔮 **Live demo:** [oracle.dowproject.my.id](https://oracle.dowproject.my.id)
 
-Built for the **Nebius x NVIDIA Global AI Hackathon** — Track: **Best Apps and Agents** · also competing for **Best Use of Tavily** ($3,000).
+*Built for the Nebius x NVIDIA Global AI Hackathon · Best Apps and Agents track.*
 
 Give it any topic. DOWOracle plans searches, digs through fresh news/forums/threads via **Tavily Search + Extract**, then synthesizes everything into a **signal report**: a 0–100 score, bull/bear/neutral verdict, key catalysts, severity-ranked risk flags — every claim backed by clickable citations. Reasoning by **NVIDIA Nemotron** models on **Nebius Token Factory**.
 
