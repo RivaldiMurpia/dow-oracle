@@ -441,8 +441,8 @@ const TAVILY_CREDIT_USD = numEnv('DOWORACLE_TAVILY_CREDIT_USD', 0.008);
 
 /**
  * One-line token/cost summary for the run. detailed=true adds a per-stage
- * split. Combines Nebius inference (token-based) + Tavily (credit-based:
- * advanced search = 2 credits/call, advanced extract = 2 credits per 5 URLs).
+ * split. Combines Nebius inference (token-based) + Tavily (real credits
+ * from include_usage, estimate as fallback).
  */
 export function usageSummary(detailed = false): string {
   const usage = getUsage();
@@ -465,16 +465,15 @@ export function usageSummary(detailed = false): string {
     }
   }
   const tu = getTavilyUsage();
-  // Validated against real dashboard logs (4 Okt 2026): search is always
-  // exactly 2 credits/call; extract is ~0.4 credits/URL (batches of 7-10
-  // URLs cost 3-4 credits, proportional — not ceil-rounded).
-  const tavilyCredits = tu.searchCalls * 2 + tu.extractedUrls * 0.4;
+  // Real credits accumulated from include_usage (validated vs dashboard
+  // 4 Okt 2026: search always 2/call, extract ~0.4/URL proportional).
+  const tavilyCredits = tu.searchCredits + tu.extractCredits;
   const tavilyCost = tavilyCredits * TAVILY_CREDIT_USD;
   const total = ((inT + outT) / 1000).toFixed(1);
   const totalCost = nebiusCost + tavilyCost;
   const tavilyBit = detailed
-    ? `Tavily ${tu.searchCalls} searches + ${tu.extractedUrls} extracts ≈ ${tavilyCredits} credits`
-    : `Tavily ~${tavilyCredits} credits`;
+    ? `Tavily ${tu.searchCalls} searches + ${tu.extractedUrls} extracts = ${tavilyCredits.toFixed(1)} credits`
+    : `Tavily ~${Math.round(tavilyCredits)} credits`;
   const head = detailed && bits.length > 0 ? bits.join(' · ') + ' · ' : '';
   return `💰 ${head}${total}k tokens · ${tavilyBit} · est. $${totalCost.toFixed(3)}`;
 }

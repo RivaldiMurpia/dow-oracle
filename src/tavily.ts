@@ -30,19 +30,28 @@ export interface TavilySearchOptions {
   excludeDomains?: string[];
 }
 
-// --- Usage accounting (credits are estimated, see pipeline usageSummary) ---
+// --- Usage accounting: real credits from include_usage, estimate as fallback ---
 export interface TavilyUsage {
-  /** Advanced search calls made */
+  /** Search API calls made */
   searchCalls: number;
-  /** URLs sent to advanced extract */
+  /** URLs sent to extract */
   extractedUrls: number;
+  /** Credits consumed by search (real from API, else 2/call estimate) */
+  searchCredits: number;
+  /** Credits consumed by extract (real from API, else 0.4/URL estimate) */
+  extractCredits: number;
 }
 
-let tavilyUsage: TavilyUsage = { searchCalls: 0, extractedUrls: 0 };
+let tavilyUsage: TavilyUsage = {
+  searchCalls: 0,
+  extractedUrls: 0,
+  searchCredits: 0,
+  extractCredits: 0,
+};
 
 /** Clear accumulated usage (call at the start of each run). */
 export function resetTavilyUsage(): void {
-  tavilyUsage = { searchCalls: 0, extractedUrls: 0 };
+  tavilyUsage = { searchCalls: 0, extractedUrls: 0, searchCredits: 0, extractCredits: 0 };
 }
 
 /** Snapshot of Tavily usage for this run. */
@@ -58,6 +67,7 @@ interface TavilySearchResponse {
     score: number;
     published_date?: string;
   }[];
+  usage?: { credits?: number };
 }
 
 /** Advanced web search tuned for fresh crypto intel. */
@@ -73,7 +83,10 @@ export async function tavilySearch(
     time_range: opts.timeRange ?? 'week',
     exclude_domains: opts.excludeDomains ?? [],
     include_answer: false,
+    include_usage: true,
   });
+  // Real credits from the API; fall back to the validated advanced rate (2).
+  tavilyUsage.searchCredits += data.usage?.credits ?? 2;
   return data.results.map((r) => ({
     title: r.title,
     url: r.url,
@@ -86,6 +99,7 @@ export async function tavilySearch(
 interface TavilyExtractResponse {
   results: { url: string; title?: string; raw_content: string }[];
   failed_results: { url: string; error: string }[];
+  usage?: { credits?: number };
 }
 
 /** Pull full clean text from a list of URLs. Failed URLs are skipped.
@@ -100,8 +114,11 @@ export async function tavilyExtract(
   const data = await post<TavilyExtractResponse>('/extract', {
     urls,
     extract_depth: 'advanced',
+    include_usage: true,
     ...(query ? { query } : {}),
   });
+  // Real credits from the API; fall back to the validated ~0.4/URL rate.
+  tavilyUsage.extractCredits += data.usage?.credits ?? urls.length * 0.4;
   return data.results
     .filter((r) => r.raw_content && r.raw_content.trim().length > 200)
     .map((r) => ({
