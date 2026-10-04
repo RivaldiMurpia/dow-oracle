@@ -5,7 +5,7 @@ import type { ProgressEvent, SignalReport } from "../../src/agent/types.js";
 import { ResearchFeed } from "../components/ResearchFeed.js";
 import { ReportView } from "../components/ReportView.js";
 import { loadHistory, saveToHistory, type HistoryEntry } from "../components/HistoryDrawer.js";
-import { OracleMark, ScrollIcon, SparkIcon, PanelIcon } from "../components/icons.js";
+import { ScrollIcon, SparkIcon, PanelIcon } from "../components/icons.js";
 
 type Status = "idle" | "researching" | "report" | "error";
 
@@ -195,7 +195,7 @@ export default function Home() {
       <aside className={`sidebar${sideOpen ? " open" : ""}${collapsed ? " collapsed" : ""}`}>
         <div className="side-top">
           <div className="wordmark collapse-hide">
-            <OracleMark className="mark" />
+            <img src="/dow-eye.png" className="mark" alt="DOW eye mark" />
             DOWOracle
             <span className="suffix">/readings</span>
           </div>
@@ -258,7 +258,7 @@ export default function Home() {
             ☰ Readings
           </button>
           <div className="wordmark">
-            <OracleMark className="mark" />
+            <img src="/dow-eye.png" className="mark" alt="DOW eye mark" />
             DOWOracle
           </div>
           <button className="menu-btn" onClick={reset}>
@@ -270,7 +270,7 @@ export default function Home() {
           {status === "idle" && (
             <>
               <div className="brand-lockup">
-                <OracleMark className="mark" />
+                <img src="/dow-eye.png" className="mark" alt="DOW eye mark" />
                 DOWOracle <span className="suffix">/readings</span>
               </div>
               <h1 className="hero-h">

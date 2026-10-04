@@ -207,10 +207,10 @@ a {
   color: var(--ink);
 }
 .wordmark .mark {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   flex: none;
-  color: var(--accent);
+  object-fit: contain;
 }
 .wordmark .suffix {
   font-family: var(--font-mono);
@@ -416,9 +416,9 @@ a {
   text-shadow: 0 1px 18px rgba(250, 246, 238, 0.9), 0 0 3px rgba(250, 246, 238, 0.9);
 }
 .brand-lockup .mark {
-  width: 30px;
-  height: 30px;
-  color: var(--accent);
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 .brand-lockup .suffix {
   font-family: var(--font-mono);
