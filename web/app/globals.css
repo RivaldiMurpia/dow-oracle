@@ -759,6 +759,9 @@ a {
   gap: 48px;
   align-items: start;
 }
+.report-grid > * {
+  min-width: 0;
+}
 
 .score-block {
   position: sticky;
@@ -885,6 +888,7 @@ a {
 
 .report-body > section {
   margin-bottom: 38px;
+  min-width: 0;
 }
 .report-body > section:last-child {
   margin-bottom: 0;
@@ -916,6 +920,7 @@ a {
   letter-spacing: -0.005em;
   color: var(--ink);
   text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 
 .catalyst-list {
@@ -941,6 +946,11 @@ a {
   width: 24px;
 }
 
+.catalyst-list li,
+.risk-detail,
+.source-list .src-title {
+  overflow-wrap: break-word;
+}
 .risk-list {
   list-style: none;
   border-top: 1px solid var(--line);
