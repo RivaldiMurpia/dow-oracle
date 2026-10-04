@@ -203,14 +203,7 @@ a {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
     padding: 2px 0;
-  }
-  .rail-mark {
-    width: 26px;
-    height: 26px;
-    color: var(--accent);
-    flex: none;
   }
   .rail-btn {
     width: 42px;
@@ -419,6 +412,8 @@ a {
 }
 
 .center-col {
+  position: relative;
+  z-index: 2;
   width: min(720px, 100%);
   margin: 0;
   padding: 48px 0;
@@ -447,6 +442,7 @@ a {
   font-size: 1.5rem;
   letter-spacing: -0.01em;
   color: var(--ink);
+  text-shadow: 0 1px 18px rgba(250, 246, 238, 0.9), 0 0 3px rgba(250, 246, 238, 0.9);
 }
 .brand-lockup .mark {
   width: 30px;
@@ -470,6 +466,7 @@ a {
   text-wrap: balance;
   margin-bottom: 12px;
   color: var(--ink);
+  text-shadow: 0 1px 22px rgba(250, 246, 238, 0.9), 0 0 4px rgba(250, 246, 238, 0.85);
 }
 .hero-h .hl {
   color: var(--accent);

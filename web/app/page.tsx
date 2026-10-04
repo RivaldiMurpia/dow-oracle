@@ -194,6 +194,11 @@ export default function Home() {
 
       <aside className={`sidebar${sideOpen ? " open" : ""}${collapsed ? " collapsed" : ""}`}>
         <div className="side-top">
+          <div className="wordmark collapse-hide">
+            <OracleMark className="mark" />
+            DOWOracle
+            <span className="suffix">/readings</span>
+          </div>
           <button
             className="collapse-btn"
             onClick={() => setCollapsed((c) => !c)}
@@ -202,11 +207,6 @@ export default function Home() {
           >
             <PanelIcon />
           </button>
-          <div className="wordmark collapse-hide">
-            <OracleMark className="mark" />
-            DOWOracle
-            <span className="suffix">/readings</span>
-          </div>
           <button className="side-close" onClick={() => setSideOpen(false)} aria-label="close menu">
             ×
           </button>
@@ -218,9 +218,8 @@ export default function Home() {
         </button>
 
         <div className="rail-only" aria-hidden={!collapsed}>
-          <OracleMark className="rail-mark" />
-          <button className="rail-btn" onClick={() => setCollapsed(false)} aria-label="Show history" title="History">
-            <ScrollIcon />
+          <button className="rail-btn" onClick={() => setCollapsed(false)} aria-label="Expand panel" title="Expand">
+            <PanelIcon />
           </button>
         </div>
 
