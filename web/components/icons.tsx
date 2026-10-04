@@ -94,3 +94,12 @@ export function ArrowLeftIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function SparkIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M8 1.5c.6 3.4 2.1 4.9 5.5 5.5-3.4.6-4.9 2.1-5.5 5.5-.6-3.4-2.1-4.9-5.5-5.5 3.4-.6 4.9-2.1 5.5-5.5z" />
+      <path d="M12.5 11.5c.3 1.4.9 2 2.3 2.3-1.4.3-2 .9-2.3 2.3-.3-1.4-.9-2-2.3-2.3 1.4-.3 2-.9 2.3-2.3z" opacity="0.6" />
+    </svg>
+  );
+}
