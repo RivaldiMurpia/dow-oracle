@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   webpack: (config) => {
@@ -11,6 +12,12 @@ const nextConfig: NextConfig = {
       ".js": [".ts", ".tsx", ".js"],
       ".jsx": [".tsx", ".jsx"],
     };
+    // Pipeline files live outside web/, so their bare imports (zod, openai)
+    // can't reach web/node_modules by walking up the tree. Add it explicitly —
+    // deployment only installs web/ dependencies.
+    const webModules = path.resolve(process.cwd(), "node_modules");
+    const existing = (config.resolve.modules as string[] | undefined) ?? ["node_modules"];
+    config.resolve.modules = [webModules, ...existing.filter((m) => m !== webModules)];
     return config;
   },
 };
