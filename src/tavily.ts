@@ -30,6 +30,26 @@ export interface TavilySearchOptions {
   excludeDomains?: string[];
 }
 
+// --- Usage accounting (credits are estimated, see pipeline usageSummary) ---
+export interface TavilyUsage {
+  /** Advanced search calls made */
+  searchCalls: number;
+  /** URLs sent to advanced extract */
+  extractedUrls: number;
+}
+
+let tavilyUsage: TavilyUsage = { searchCalls: 0, extractedUrls: 0 };
+
+/** Clear accumulated usage (call at the start of each run). */
+export function resetTavilyUsage(): void {
+  tavilyUsage = { searchCalls: 0, extractedUrls: 0 };
+}
+
+/** Snapshot of Tavily usage for this run. */
+export function getTavilyUsage(): TavilyUsage {
+  return { ...tavilyUsage };
+}
+
 interface TavilySearchResponse {
   results: {
     title: string;
@@ -45,6 +65,7 @@ export async function tavilySearch(
   query: string,
   opts: TavilySearchOptions = {},
 ): Promise<SearchHit[]> {
+  tavilyUsage.searchCalls += 1;
   const data = await post<TavilySearchResponse>('/search', {
     query,
     search_depth: 'advanced',
@@ -75,6 +96,7 @@ export async function tavilyExtract(
   query?: string,
 ): Promise<{ url: string; title: string; text: string }[]> {
   if (urls.length === 0) return [];
+  tavilyUsage.extractedUrls += urls.length;
   const data = await post<TavilyExtractResponse>('/extract', {
     urls,
     extract_depth: 'advanced',

@@ -2,7 +2,7 @@
 // plan -> search -> dedupe -> extract -> summarize -> analyze
 
 import { z } from 'zod';
-import { tavilySearch, tavilyExtract } from '../tavily.js';
+import { tavilySearch, tavilyExtract, resetTavilyUsage, getTavilyUsage } from '../tavily.js';
 import { chatJson, reasoningModel, fastModel, resetUsage, getUsage } from '../nebius.js';
 import { PLANNER_SYSTEM, SUMMARIZER_SYSTEM, ANALYST_SYSTEM } from './prompts.js';
 import type {
@@ -184,6 +184,7 @@ export async function runResearch(
     onProgress({ stage, message });
   const debug = process.env.DOWORACLE_DEBUG === '1';
   resetUsage();
+  resetTavilyUsage();
 
   // Per-stage timing so slow runs can be diagnosed instead of guessed.
   const startedAt = Date.now();
@@ -435,17 +436,20 @@ const PRICE = {
   },
 };
 
+// $ per Tavily credit — docs.tavily.com/documentation/api-credits (pay-as-you-go).
+const TAVILY_CREDIT_USD = numEnv('DOWORACLE_TAVILY_CREDIT_USD', 0.008);
+
 /**
  * One-line token/cost summary for the run. detailed=true adds a per-stage
- * split. Cost is a lower bound ("+") when the reasoning model's price is
- * unknown — set DOWORACLE_PRICE_REASONING_IN/OUT for a full estimate.
+ * split. Combines Nebius inference (token-based) + Tavily (credit-based:
+ * advanced search = 2 credits/call, advanced extract = 2 credits per 5 URLs).
  */
 export function usageSummary(detailed = false): string {
   const usage = getUsage();
   const order = ['planning', 'summarizing', 'analyzing'] as const;
   let inT = 0;
   let outT = 0;
-  let cost = 0;
+  let nebiusCost = 0;
   const bits: string[] = [];
   for (const label of order) {
     const u = usage.get(label);
@@ -453,18 +457,23 @@ export function usageSummary(detailed = false): string {
     inT += u.promptTokens;
     outT += u.completionTokens;
     const p = label === 'analyzing' ? PRICE.reasoning : PRICE.fast;
-    cost += (u.promptTokens * p.in + u.completionTokens * p.out) / 1e6;
+    nebiusCost += (u.promptTokens * p.in + u.completionTokens * p.out) / 1e6;
     if (detailed) {
       bits.push(
         `${label} ${(u.promptTokens / 1000).toFixed(1)}k in / ${(u.completionTokens / 1000).toFixed(1)}k out (${u.calls} calls)`,
       );
     }
   }
+  const tu = getTavilyUsage();
+  const tavilyCredits = tu.searchCalls * 2 + Math.ceil(tu.extractedUrls / 5) * 2;
+  const tavilyCost = tavilyCredits * TAVILY_CREDIT_USD;
   const total = ((inT + outT) / 1000).toFixed(1);
-  const priced = PRICE.reasoning.in > 0 || PRICE.reasoning.out > 0;
-  const costStr = priced ? `$${cost.toFixed(4)}` : `$${cost.toFixed(4)}+`;
+  const totalCost = nebiusCost + tavilyCost;
+  const tavilyBit = detailed
+    ? `Tavily ${tu.searchCalls} searches + ${tu.extractedUrls} extracts ≈ ${tavilyCredits} credits`
+    : `Tavily ~${tavilyCredits} credits`;
   const head = detailed && bits.length > 0 ? bits.join(' · ') + ' · ' : '';
-  return `💰 ${head}${total}k tokens · est. ${costStr}${priced ? '' : ' (reasoning price n/a)'}`;
+  return `💰 ${head}${total}k tokens · ${tavilyBit} · est. $${totalCost.toFixed(3)}`;
 }
 
 /** Render a report as Markdown (for CLI output and later reuse in the UI). */
