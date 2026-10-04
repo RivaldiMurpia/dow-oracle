@@ -40,6 +40,26 @@ export interface ChatOptions {
    * (vLLM-style) which Nebius Token Factory honors.
    */
   thinking?: boolean;
+  /** Label for token-usage accounting (e.g. 'planning', 'summarizing'). */
+  label?: string;
+}
+
+export interface StageUsage {
+  calls: number;
+  promptTokens: number;
+  completionTokens: number;
+}
+
+const usageByLabel = new Map<string, StageUsage>();
+
+/** Clear accumulated token usage (call at the start of each run). */
+export function resetUsage(): void {
+  usageByLabel.clear();
+}
+
+/** Snapshot of token usage accumulated by labeled chat() calls. */
+export function getUsage(): Map<string, StageUsage> {
+  return new Map(usageByLabel);
 }
 
 type ChatBody = ChatCompletionCreateParams & {
@@ -65,6 +85,17 @@ export async function chat(
     body.chat_template_kwargs = { enable_thinking: false };
   }
   const res = await getClient().chat.completions.create(body);
+  if (opts.label && res.usage) {
+    const u = usageByLabel.get(opts.label) ?? {
+      calls: 0,
+      promptTokens: 0,
+      completionTokens: 0,
+    };
+    u.calls += 1;
+    u.promptTokens += res.usage.prompt_tokens ?? 0;
+    u.completionTokens += res.usage.completion_tokens ?? 0;
+    usageByLabel.set(opts.label, u);
+  }
   return res.choices[0]?.message?.content?.trim() ?? '';
 }
 

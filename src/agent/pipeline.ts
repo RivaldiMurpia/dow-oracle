@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { tavilySearch, tavilyExtract } from '../tavily.js';
-import { chatJson, reasoningModel, fastModel } from '../nebius.js';
+import { chatJson, reasoningModel, fastModel, resetUsage, getUsage } from '../nebius.js';
 import { PLANNER_SYSTEM, SUMMARIZER_SYSTEM, ANALYST_SYSTEM } from './prompts.js';
 import type {
   ExtractedSource,
@@ -183,6 +183,7 @@ export async function runResearch(
   const emit = (stage: ProgressStage, message: string) =>
     onProgress({ stage, message });
   const debug = process.env.DOWORACLE_DEBUG === '1';
+  resetUsage();
 
   // Per-stage timing so slow runs can be diagnosed instead of guessed.
   const startedAt = Date.now();
@@ -205,7 +206,7 @@ export async function runResearch(
         PLANNER_SYSTEM,
         `Topic: ${topic}`,
         PlannedQueriesSchema,
-        { thinking: false },
+        { thinking: false, label: 'planning' },
       );
       const rejected = candidate.queries.filter(
         (q) => isJunkQuery(q.query) || !matchesTopic(q.query, keywords),
@@ -327,7 +328,7 @@ export async function runResearch(
               ? '\n\nSTRICT: summarize the ACTUAL article text above. Do not repeat instructions or output example text.'
               : ''),
           SummarySchema,
-          { thinking: false },
+          { thinking: false, label: 'summarizing' },
         );
         if (!isTemplateEcho(parsed.summary, parsed.keyClaims)) {
           return { url: src.url, title: src.title, ...parsed };
@@ -393,7 +394,7 @@ export async function runResearch(
     ANALYST_SYSTEM,
     `TOPIC: ${topic}\n\n${analystInput}`,
     AnalysisSchema,
-    { maxTokens: 3000 },
+    { maxTokens: 3000, label: 'analyzing' },
   );
 
   // 6. Assemble
@@ -412,9 +413,58 @@ export async function runResearch(
   const timingStr = timing.map(([l, s]) => `${l} ${s}s`).join(' · ');
   emit(
     'done',
-    `Report ready — score ${report.score}/100 (${report.verdict}). ⏱️ ${timingStr} · total ${totalSec}s`,
+    `Report ready — score ${report.score}/100 (${report.verdict}). ⏱️ ${timingStr} · total ${totalSec}s · ${usageSummary()}`,
   );
   return report;
+}
+
+function numEnv(name: string, fallback: number): number {
+  const v = parseFloat(process.env[name] ?? '');
+  return Number.isFinite(v) ? v : fallback;
+}
+
+// $ per 1M tokens — Nebius Token Factory list prices (Oct 2026). Override via env.
+const PRICE = {
+  fast: {
+    in: numEnv('DOWORACLE_PRICE_FAST_IN', 0.06),
+    out: numEnv('DOWORACLE_PRICE_FAST_OUT', 0.24),
+  },
+  reasoning: {
+    in: numEnv('DOWORACLE_PRICE_REASONING_IN', 0),
+    out: numEnv('DOWORACLE_PRICE_REASONING_OUT', 0),
+  },
+};
+
+/**
+ * One-line token/cost summary for the run. detailed=true adds a per-stage
+ * split. Cost is a lower bound ("+") when the reasoning model's price is
+ * unknown — set DOWORACLE_PRICE_REASONING_IN/OUT for a full estimate.
+ */
+export function usageSummary(detailed = false): string {
+  const usage = getUsage();
+  const order = ['planning', 'summarizing', 'analyzing'] as const;
+  let inT = 0;
+  let outT = 0;
+  let cost = 0;
+  const bits: string[] = [];
+  for (const label of order) {
+    const u = usage.get(label);
+    if (!u || u.calls === 0) continue;
+    inT += u.promptTokens;
+    outT += u.completionTokens;
+    const p = label === 'analyzing' ? PRICE.reasoning : PRICE.fast;
+    cost += (u.promptTokens * p.in + u.completionTokens * p.out) / 1e6;
+    if (detailed) {
+      bits.push(
+        `${label} ${(u.promptTokens / 1000).toFixed(1)}k in / ${(u.completionTokens / 1000).toFixed(1)}k out (${u.calls} calls)`,
+      );
+    }
+  }
+  const total = ((inT + outT) / 1000).toFixed(1);
+  const priced = PRICE.reasoning.in > 0 || PRICE.reasoning.out > 0;
+  const costStr = priced ? `$${cost.toFixed(4)}` : `$${cost.toFixed(4)}+`;
+  const head = detailed && bits.length > 0 ? bits.join(' · ') + ' · ' : '';
+  return `💰 ${head}${total}k tokens · est. ${costStr}${priced ? '' : ' (reasoning price n/a)'}`;
 }
 
 /** Render a report as Markdown (for CLI output and later reuse in the UI). */
