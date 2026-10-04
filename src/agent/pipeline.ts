@@ -465,7 +465,10 @@ export function usageSummary(detailed = false): string {
     }
   }
   const tu = getTavilyUsage();
-  const tavilyCredits = tu.searchCalls * 2 + Math.ceil(tu.extractedUrls / 5) * 2;
+  // Validated against real dashboard logs (4 Okt 2026): search is always
+  // exactly 2 credits/call; extract is ~0.4 credits/URL (batches of 7-10
+  // URLs cost 3-4 credits, proportional — not ceil-rounded).
+  const tavilyCredits = tu.searchCalls * 2 + tu.extractedUrls * 0.4;
   const tavilyCost = tavilyCredits * TAVILY_CREDIT_USD;
   const total = ((inT + outT) / 1000).toFixed(1);
   const totalCost = nebiusCost + tavilyCost;
