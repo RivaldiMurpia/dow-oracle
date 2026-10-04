@@ -187,12 +187,11 @@ export default function Home() {
             <div>
               <div className="hero-kicker">Crypto research agent</div>
               <h1>
-                Ask the oracle <em>anything.</em>
+                Ask the <span className="hl">oracle</span> anything.
               </h1>
               <p className="hero-sub">
-                It plans fresh searches, digs through news, forums and
-                threads, then returns a signal report — score, verdict,
-                catalysts, risk flags — every claim cited.
+                Fresh searches across news, forums and threads — distilled
+                into a signal report: score, verdict, catalysts, risk flags.
               </p>
               <form className="query-form" onSubmit={submit}>
                 <input
@@ -217,7 +216,6 @@ export default function Home() {
               </div>
             </div>
             <aside className="hero-side">
-              <h2>How a reading works</h2>
               <ul className="stage-list">
                 {HOW_IT_WORKS.map(([n, name, detail]) => (
                   <li key={n}>

@@ -1,34 +1,35 @@
 /* DOWOracle — oracle chamber design system.
-   Dark, violet-tinted, one accent. Fraunces for display, Inter for body,
-   JetBrains Mono for data. Neutrals tinted toward the brand hue; borders
-   kept at 0.10–0.18 white opacity. */
+   Dark, warm-tinted, one accent (muted gold — the oracle's metal).
+   Space Grotesk for display, Geist for body, JetBrains Mono for data.
+   Neutrals tinted toward the brand hue; borders at 0.10–0.18 white opacity.
+   Signal colors (bull/bear) stay reserved for verdicts only. */
 
 :root {
-  --bg: #0b0a12;
-  --bg-sunken: #08070d;
-  --bg-raised: #14121e;
-  --bg-overlay: #1a1826;
+  --bg: #0f0e0b;
+  --bg-sunken: #0a0908;
+  --bg-raised: #171512;
+  --bg-overlay: #1e1a15;
 
-  --ink: #f1eff9;
-  --ink-dim: #a9a4c4;
-  --ink-faint: #6d6889;
+  --ink: #f2ede3;
+  --ink-dim: #b3a894;
+  --ink-faint: #6f6659;
 
   --line: rgba(255, 255, 255, 0.12);
   --line-soft: rgba(255, 255, 255, 0.07);
 
-  --accent: #8b5cf6;
-  --accent-soft: rgba(139, 92, 246, 0.13);
-  --accent-line: rgba(139, 92, 246, 0.45);
+  --accent: #c9a15a;
+  --accent-soft: rgba(201, 161, 90, 0.12);
+  --accent-line: rgba(201, 161, 90, 0.45);
 
   --bull: #34d399;
   --bull-soft: rgba(52, 211, 153, 0.12);
   --bear: #fb7185;
   --bear-soft: rgba(251, 113, 133, 0.12);
-  --neut: #fbbf24;
-  --neut-soft: rgba(251, 191, 36, 0.12);
+  --neut: #a8a29e;
+  --neut-soft: rgba(168, 162, 158, 0.12);
 
-  --font-display: "Fraunces", Georgia, serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Geist", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -79,7 +80,7 @@ a {
 }
 
 ::selection {
-  background: rgba(139, 92, 246, 0.35);
+  background: rgba(201, 161, 90, 0.35);
 }
 
 .font-display { font-family: var(--font-display); }
@@ -159,6 +160,8 @@ a {
 
 .main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
@@ -181,11 +184,12 @@ a {
 /* ---------- idle / hero ---------- */
 
 .hero {
+  flex: 1;
   display: grid;
   grid-template-columns: 7fr 5fr;
   gap: 48px;
-  align-items: start;
-  padding-top: 88px;
+  align-items: center;
+  padding: 48px 0;
 }
 
 .hero-kicker {
@@ -199,16 +203,15 @@ a {
 
 .hero h1 {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 600;
   font-size: clamp(2.6rem, 5.2vw, 4.2rem);
   line-height: 1.04;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
   margin-bottom: 20px;
   text-wrap: balance;
 }
 
-.hero h1 em {
-  font-style: italic;
+.hero h1 .hl {
   color: var(--accent);
 }
 
@@ -254,7 +257,7 @@ a {
   align-items: center;
   gap: 10px;
   background: var(--accent);
-  color: #fff;
+  color: #171208;
   border: 0;
   font-family: var(--font-body);
   font-weight: 600;
@@ -307,17 +310,6 @@ a {
 .hero-side {
   border-left: 1px solid var(--line-soft);
   padding-left: 40px;
-  padding-top: 8px;
-}
-
-.hero-side h2 {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin-bottom: 18px;
 }
 
 .stage-list {
@@ -941,6 +933,20 @@ a {
 }
 
 /* ---------- responsive ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-cell.active .dot,
+  .log-line,
+  .catalyst-list li,
+  .risk-list li,
+  .drawer-scrim,
+  .drawer {
+    animation: none;
+  }
+  .ring-fg {
+    transition: none;
+  }
+}
 
 @media (max-width: 900px) {
   .hero {

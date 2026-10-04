@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Geist, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Space_Grotesk({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const body = Inter({
+const body = Geist({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600"],

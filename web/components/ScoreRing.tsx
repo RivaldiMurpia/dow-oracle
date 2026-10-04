@@ -6,7 +6,7 @@ import type { Verdict } from "../../src/agent/types.js";
 const COLORS: Record<Verdict, string> = {
   bullish: "#34d399",
   bearish: "#fb7185",
-  neutral: "#fbbf24",
+  neutral: "#a8a29e",
 };
 
 /** Radial score ring — the hero element of a report. Counts up on mount. */
