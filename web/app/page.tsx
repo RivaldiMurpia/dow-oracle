@@ -246,11 +246,6 @@ export default function Home() {
           )}
         </div>
 
-        <div className="side-foot collapse-hide">
-          Nemotron on Nebius · grounded with Tavily
-          <br />
-          Best Apps &amp; Agents · Best Use of Tavily
-        </div>
       </aside>
       <div
         className={`scrim${sideOpen ? " show" : ""}`}
@@ -362,6 +357,12 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        <footer className="page-foot">
+          <span>Nemotron on Nebius · grounded with Tavily</span>
+          <span aria-hidden>·</span>
+          <span>Best Apps &amp; Agents · Best Use of Tavily</span>
+        </footer>
       </main>
     </div>
   );

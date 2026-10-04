@@ -340,17 +340,6 @@ a {
 .hist-score.bearish { color: var(--bear); background: var(--bear-soft); }
 .hist-score.neutral { color: var(--neut); background: var(--neut-soft); }
 
-.side-foot {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-faint);
-  padding: 4px 6px 0;
-  border-top: 1px solid var(--line-soft);
-  padding-top: 14px;
-  line-height: 1.7;
-}
-
 .scrim {
   display: none;
 }
@@ -365,6 +354,28 @@ a {
   align-items: center;
   justify-content: safe center;
   padding: 0 32px 80px;
+  position: relative;
+}
+
+.page-foot {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  padding: 0 24px;
+  text-align: center;
+  text-shadow: 0 1px 12px rgba(250, 246, 238, 0.9);
+  pointer-events: none;
 }
 
 .mobilebar {
