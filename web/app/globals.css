@@ -34,6 +34,7 @@
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Geist", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-brand: "Baloo 2", system-ui, sans-serif;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --r-lg: 22px;
@@ -198,24 +199,28 @@ a {
 
 .wordmark {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.18rem;
-  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
   gap: 9px;
   color: var(--ink);
 }
-.wordmark .mark {
-  width: 26px;
-  height: 26px;
-  flex: none;
-  object-fit: contain;
+.wordmark img.dow {
+  height: 25px;
+  width: auto;
+  display: block;
+}
+.wordmark .o-text {
+  font-family: var(--font-brand);
+  font-weight: 800;
+  font-size: 0.92rem;
+  letter-spacing: 0.24em;
+  color: var(--ink);
+  padding-top: 1px;
 }
 .wordmark .suffix {
   font-family: var(--font-mono);
   font-weight: 400;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--ink-faint);
 }
 
@@ -402,29 +407,27 @@ a {
 
 /* ---------- idle ---------- */
 
-.brand-lockup {
+.brand-stack {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 26px;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: -0.01em;
+  gap: 14px;
+  margin-bottom: 30px;
+}
+.brand-stack img.dow {
+  height: 66px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 2px 18px rgba(250, 246, 238, 0.9));
+}
+.brand-stack .o-text {
+  font-family: var(--font-brand);
+  font-weight: 800;
+  font-size: 1.45rem;
+  letter-spacing: 0.6em;
+  text-indent: 0.6em;
   color: var(--ink);
   text-shadow: 0 1px 18px rgba(250, 246, 238, 0.9), 0 0 3px rgba(250, 246, 238, 0.9);
-}
-.brand-lockup .mark {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-}
-.brand-lockup .suffix {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: 1rem;
-  color: var(--ink-faint);
 }
 
 .hero-h {
@@ -1115,9 +1118,6 @@ a {
     justify-content: space-between;
     width: 100%;
     padding: 16px 4px;
-  }
-  .mobilebar .wordmark {
-    font-size: 1.05rem;
   }
   .menu-btn {
     display: inline-flex;

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Geist, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Geist, JetBrains_Mono, Baloo_2 } from "next/font/google";
 import "./globals.css";
 
 const display = Space_Grotesk({
@@ -20,6 +20,12 @@ const mono = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
+const brand = Baloo_2({
+  variable: "--font-brand",
+  subsets: ["latin"],
+  weight: ["700", "800"],
+});
+
 export const metadata: Metadata = {
   title: "DOWOracle — Ask the oracle anything",
   description:
@@ -34,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${display.variable} ${body.variable} ${mono.variable}`}
+      className={`${display.variable} ${body.variable} ${mono.variable} ${brand.variable}`}
     >
       <body>{children}</body>
     </html>

@@ -195,8 +195,8 @@ export default function Home() {
       <aside className={`sidebar${sideOpen ? " open" : ""}${collapsed ? " collapsed" : ""}`}>
         <div className="side-top">
           <div className="wordmark collapse-hide">
-            <img src="/dow-eye.png" className="mark" alt="DOW eye mark" />
-            DOWOracle
+            <img src="/dow-word.png" className="dow" alt="DOW" />
+            <span className="o-text">ORACLE</span>
             <span className="suffix">/readings</span>
           </div>
           <button
@@ -258,8 +258,8 @@ export default function Home() {
             ☰ Readings
           </button>
           <div className="wordmark">
-            <img src="/dow-eye.png" className="mark" alt="DOW eye mark" />
-            DOWOracle
+            <img src="/dow-word.png" className="dow" alt="DOW" />
+            <span className="o-text">ORACLE</span>
           </div>
           <button className="menu-btn" onClick={reset}>
             + New
@@ -269,9 +269,9 @@ export default function Home() {
         <div className={`center-col${status === "idle" ? "" : " wide"}`}>
           {status === "idle" && (
             <>
-              <div className="brand-lockup">
-                <img src="/dow-eye.png" className="mark" alt="DOW eye mark" />
-                DOWOracle <span className="suffix">/readings</span>
+              <div className="brand-stack">
+                <img src="/dow-word.png" className="dow" alt="DOW" />
+                <div className="o-text">ORACLE</div>
               </div>
               <h1 className="hero-h">
                 Ask the <span className="hl">oracle</span> anything.
