@@ -212,16 +212,9 @@ export default function Home() {
           </button>
         </div>
 
-        <button className="new-btn" onClick={() => { reset(); setSideOpen(false); }}>
-          <span aria-hidden className="new-plus">+</span>
-          <span className="collapse-hide">New reading</span>
+        <button className="new-btn collapse-hide" onClick={() => { reset(); setSideOpen(false); }}>
+          <span aria-hidden>+</span> New reading
         </button>
-
-        <div className="rail-only" aria-hidden={!collapsed}>
-          <button className="rail-btn" onClick={() => setCollapsed(false)} aria-label="Expand panel" title="Expand">
-            <PanelIcon />
-          </button>
-        </div>
 
         <div className="side-label collapse-hide">History</div>
         <div className="side-history collapse-hide">

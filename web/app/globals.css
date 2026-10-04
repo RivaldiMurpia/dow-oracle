@@ -174,10 +174,6 @@ a {
   height: 17px;
 }
 
-.rail-only {
-  display: none;
-}
-
 /* collapsible rail — desktop only */
 @media (min-width: 961px) {
   .sidebar.collapsed {
@@ -190,42 +186,6 @@ a {
     justify-content: center;
     padding-left: 0;
     padding-right: 0;
-  }
-  .sidebar.collapsed .new-btn {
-    justify-content: center;
-    padding: 12px 0;
-  }
-  .sidebar.collapsed .new-btn .new-plus {
-    font-size: 1.2rem;
-    line-height: 1;
-  }
-  .sidebar.collapsed .rail-only {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 2px 0;
-  }
-  .rail-btn {
-    width: 42px;
-    height: 42px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    color: var(--ink-dim);
-    cursor: pointer;
-    transition: background 160ms var(--ease-out), color 160ms var(--ease-out), border-color 160ms var(--ease-out);
-  }
-  .rail-btn:hover {
-    background: rgba(255, 255, 255, 0.7);
-    color: var(--ink);
-    border-color: var(--accent-line);
-  }
-  .rail-btn svg {
-    width: 17px;
-    height: 17px;
   }
 }
 
