@@ -5,7 +5,7 @@ import type { ProgressEvent, SignalReport } from "../../src/agent/types.js";
 import { ResearchFeed } from "../components/ResearchFeed.js";
 import { ReportView } from "../components/ReportView.js";
 import { loadHistory, saveToHistory, type HistoryEntry } from "../components/HistoryDrawer.js";
-import { OracleMark, ScrollIcon, SparkIcon } from "../components/icons.js";
+import { OracleMark, ScrollIcon, SparkIcon, PanelIcon } from "../components/icons.js";
 
 type Status = "idle" | "researching" | "report" | "error";
 
@@ -48,6 +48,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [sideOpen, setSideOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -191,9 +192,17 @@ export default function Home() {
     <div className="shell">
       <div className="bg" aria-hidden />
 
-      <aside className={`sidebar${sideOpen ? " open" : ""}`}>
+      <aside className={`sidebar${sideOpen ? " open" : ""}${collapsed ? " collapsed" : ""}`}>
         <div className="side-top">
-          <div className="wordmark">
+          <button
+            className="collapse-btn"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? "Expand panel" : "Minimize panel"}
+            title={collapsed ? "Expand" : "Minimize"}
+          >
+            <PanelIcon />
+          </button>
+          <div className="wordmark collapse-hide">
             <OracleMark className="mark" />
             DOWOracle
             <span className="suffix">/readings</span>
@@ -203,12 +212,20 @@ export default function Home() {
           </button>
         </div>
 
-        <button className="new-btn" onClick={reset}>
-          <span aria-hidden>+</span> New reading
+        <button className="new-btn" onClick={() => { reset(); setSideOpen(false); }}>
+          <span aria-hidden className="new-plus">+</span>
+          <span className="collapse-hide">New reading</span>
         </button>
 
-        <div className="side-label">History</div>
-        <div className="side-history">
+        <div className="rail-only" aria-hidden={!collapsed}>
+          <OracleMark className="rail-mark" />
+          <button className="rail-btn" onClick={() => setCollapsed(false)} aria-label="Show history" title="History">
+            <ScrollIcon />
+          </button>
+        </div>
+
+        <div className="side-label collapse-hide">History</div>
+        <div className="side-history collapse-hide">
           {history.length === 0 ? (
             <div className="side-empty">
               <ScrollIcon />
@@ -237,7 +254,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="side-foot">
+        <div className="side-foot collapse-hide">
           Nemotron on Nebius · grounded with Tavily
           <br />
           Best Apps &amp; Agents · Best Use of Tavily

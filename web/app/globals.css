@@ -146,6 +146,94 @@ a {
   top: 0;
   height: 100dvh;
   z-index: 30;
+  overflow: hidden;
+  transition: width 280ms var(--ease-out);
+}
+
+.collapse-btn {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: background 160ms var(--ease-out), color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+}
+.collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: var(--line-soft);
+  color: var(--ink);
+}
+.collapse-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.rail-only {
+  display: none;
+}
+
+/* collapsible rail — desktop only */
+@media (min-width: 961px) {
+  .sidebar.collapsed {
+    width: 84px;
+  }
+  .sidebar.collapsed .collapse-hide {
+    display: none;
+  }
+  .sidebar.collapsed .side-top {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .sidebar.collapsed .new-btn {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .sidebar.collapsed .new-btn .new-plus {
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+  .sidebar.collapsed .rail-only {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 2px 0;
+  }
+  .rail-mark {
+    width: 26px;
+    height: 26px;
+    color: var(--accent);
+    flex: none;
+  }
+  .rail-btn {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: background 160ms var(--ease-out), color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+  }
+  .rail-btn:hover {
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--ink);
+    border-color: var(--accent-line);
+  }
+  .rail-btn svg {
+    width: 17px;
+    height: 17px;
+  }
 }
 
 .side-top {
@@ -322,6 +410,7 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: safe center;
   padding: 0 32px 80px;
 }
 
@@ -331,8 +420,8 @@ a {
 
 .center-col {
   width: min(720px, 100%);
-  margin: auto 0;
-  padding: 56px 0;
+  margin: 0;
+  padding: 48px 0;
   display: flex;
   flex-direction: column;
   animation: rise 420ms var(--ease-out);
@@ -1034,6 +1123,9 @@ a {
   }
   .side-close {
     display: block;
+  }
+  .collapse-btn {
+    display: none;
   }
   .scrim {
     display: block;

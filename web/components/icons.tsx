@@ -103,3 +103,12 @@ export function SparkIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function PanelIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="2" y="2.5" width="12" height="11" rx="2" />
+      <path d="M6.2 2.5v11" opacity="0.55" />
+    </svg>
+  );
+}
