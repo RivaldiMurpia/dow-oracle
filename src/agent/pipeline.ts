@@ -371,7 +371,14 @@ export async function runResearch(
   mark('summarizing');
 
   if (summaries.length === 0) {
-    throw new Error('No usable source summaries — try a different topic.');
+    // Distinguish a broken upstream (all summarizer calls failed → likely a
+    // bad NEBIUS_* config) from a genuinely thin topic (all dropped as
+    // irrelevant), so the error message points at the real problem.
+    const cause =
+      droppedFailed > 0 && droppedFailed >= droppedIrrelevant
+        ? `${droppedFailed} summarizer call(s) failed — check NEBIUS_API_KEY / NEBIUS_BASE_URL / model names`
+        : `${droppedIrrelevant} source(s) dropped as irrelevant to the topic`;
+    throw new Error(`No usable source summaries (${cause}) — try a different topic.`);
   }
 
   // 5. Analyze (reasoning model, once)
