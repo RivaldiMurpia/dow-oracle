@@ -318,6 +318,7 @@ export async function runResearch(
   const summaries: SourceSummary[] = [];
   let droppedIrrelevant = 0;
   let droppedFailed = 0;
+  let firstFailureReason = '';
   const settled = await Promise.allSettled(
     extracted.map(async (src) => {
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -358,6 +359,7 @@ export async function runResearch(
       droppedFailed++;
       const reason =
         s.reason instanceof Error ? s.reason.message : String(s.reason);
+      if (!firstFailureReason) firstFailureReason = reason.slice(0, 180);
       emit(
         'summarizing',
         `Dropped (summarizer error): ${src.url} — ${reason.slice(0, 150)}`,
@@ -376,7 +378,7 @@ export async function runResearch(
     // irrelevant), so the error message points at the real problem.
     const cause =
       droppedFailed > 0 && droppedFailed >= droppedIrrelevant
-        ? `${droppedFailed} summarizer call(s) failed — check NEBIUS_API_KEY / NEBIUS_BASE_URL / model names`
+        ? `${droppedFailed} summarizer call(s) failed${firstFailureReason ? ` — first error: ${firstFailureReason}` : ''} — check NEBIUS_API_KEY / NEBIUS_BASE_URL / model names`
         : `${droppedIrrelevant} source(s) dropped as irrelevant to the topic`;
     throw new Error(`No usable source summaries (${cause}) — try a different topic.`);
   }
