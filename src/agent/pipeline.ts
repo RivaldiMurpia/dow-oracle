@@ -430,8 +430,8 @@ const PRICE = {
     out: numEnv('DOWORACLE_PRICE_FAST_OUT', 0.24),
   },
   reasoning: {
-    in: numEnv('DOWORACLE_PRICE_REASONING_IN', 0),
-    out: numEnv('DOWORACLE_PRICE_REASONING_OUT', 0),
+    in: numEnv('DOWORACLE_PRICE_REASONING_IN', 1.0),
+    out: numEnv('DOWORACLE_PRICE_REASONING_OUT', 3.0),
   },
 };
 
