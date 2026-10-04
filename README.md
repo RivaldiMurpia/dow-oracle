@@ -6,6 +6,16 @@ Give it a topic, it goes into the field: plans searches, digs through fresh news
 
 Track: **Best Apps and Agents** (+ targeting the **Best Use of Tavily** $3K prize).
 
+## Why DOWOracle? (vs Tavily Deep Research)
+
+Tavily's own [Deep Research](https://tavily.com/research) is a great general research agent — it answers *"what happened"* with a long-form report. DOWOracle answers *"so what"*:
+
+- **Signal, not summary** — every run ends with a 0–100 score, a bullish/bearish/neutral verdict, catalysts, and severity-ranked risk flags. The output is meant for decisions, not just reading.
+- **Crypto-native at every stage** — the planner always includes scam/risk angles, junk filters drop price pages and extract-hostile domains, and the analyst understands token unlocks, governance, and validator dynamics.
+- **Honest by design** — when sources are thin or AI-generated slop, the analyst scores low and says so instead of inventing. For financial decisions, that refusal is the feature.
+- **Built on Tavily, not against it** — DOWOracle composes Tavily Search + Extract with NVIDIA Nemotron reasoning into a specialized pipeline. It's a demonstration of what Tavily's primitives enable.
+- **Open & transparent** — MIT-licensed, runs on your own API keys, and every run reports its own cost (~$0.11) and per-stage timing.
+
 ## Quick start
 
 ```bash
